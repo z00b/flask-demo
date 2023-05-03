@@ -9,5 +9,10 @@ def hello():
     '''Ensure that people feel very welcome.'''
     return "Hello, my friends!"
 
+@APP.route('/goodbye')
+def goodbye():
+    return 'Goodbye!'
+
+
 if __name__ == "__main__":
     APP.run()
