@@ -136,7 +136,7 @@ workflows:
     jobs:
       - lint
       - build
-      - package
+      - package:
           requires:
             - lint
             - build
