@@ -104,8 +104,6 @@ workflows:
           filters:
             branches:
               only: main
-          pre-steps:
-            - setup_remote_docker
       - deploy:
           requires:
             - package
@@ -113,8 +111,6 @@ workflows:
           filters:
             branches:
               only: main
-          pre-steps:
-            - setup_remote_docker
 
 commands:
   gcp-oidc-generate-cred-config-file:
