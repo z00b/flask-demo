@@ -106,6 +106,7 @@ workflows:
       - deploy:
           requires:
             - package
+          context: z00b-basics
           filters:
             branches:
               only: main
