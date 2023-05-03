@@ -74,19 +74,17 @@ jobs:
           name: Docker Build
           command: docker build -t hello:${CIRCLE_SHA1} .
 
-  # none of this does anything
-  # deploy:
-  #   docker:
-  #     - image: docker:17.05.0-ce-git
-  #   steps:
-  #     - setup_remote_docker:
-  #         reusable: true
-  #     - run:
-  #         name: Push to Heroku
-  #         command: |
-  #           docker login --username=_ --password=${HEROKU_AUTH_TOKEN} registry.heroku.com
-  #           docker tag hello:${CIRCLE_SHA1} registry.heroku.com/z00b/web
-  #           docker push registry.heroku.com/z00b/web
+  deploy:
+    docker:
+      - image: gcp-cli/default
+    steps:
+      - gcp-cli/install
+      # - run:
+      #     name: Push to GCP
+      #     command: |
+      #       docker login --username=_ --password=${HEROKU_AUTH_TOKEN} registry.heroku.com
+      #       docker tag hello:${CIRCLE_SHA1} registry.heroku.com/z00b/web
+      #       docker push registry.heroku.com/z00b/web
 
 
 workflows:
@@ -99,6 +97,14 @@ workflows:
           requires:
             - lint
             - build
+          filters:
+            branches:
+              only: main
+          pre-steps:
+            - setup_remote_docker
+      - deploy:
+          requires:
+            - package
           filters:
             branches:
               only: main
