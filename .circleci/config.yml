@@ -1,9 +1,31 @@
 version: 2.1
 
 orbs:
-  heroku: circleci/heroku@1.2.6
+    gcp-cli: circleci/gcp-cli@3.0.1
 
 jobs:
+  lint:
+    docker:
+      - image: cimg/python:3.9.2
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+          - v100-dependencies-{{ checksum "requirements.txt" }}
+          - v100-dependencies-
+      - run:
+          name: install dependencies
+          command: |
+            python3 -m venv venv
+            . venv/bin/activate
+            pip install -r requirements.txt
+      - run:
+          name: pylint
+          command: |
+            . venv/bin/activate
+            pylint --output-format=colorized hello
+
   build:
     docker:
       - image: cimg/python:3.9.2
@@ -43,27 +65,69 @@ jobs:
       - store_test_results:
           path: test-results
 
-  lint:
+  build:
     docker:
       - image: cimg/python:3.9.2
+
     working_directory: ~/repo
+
     steps:
       - checkout
+
+      # Download and cache dependencies
       - restore_cache:
           keys:
-          - v100-dependencies-{{ checksum "requirements.txt" }}
-          - v100-dependencies-
+          - v1-dependencies-{{ checksum "requirements.txt" }}
+          # fallback to using the latest cache if no exact match is found
+          - v1-dependencies-
+
       - run:
           name: install dependencies
           command: |
             python3 -m venv venv
             . venv/bin/activate
             pip install -r requirements.txt
+
+      - save_cache:
+          paths:
+            - ./venv
+          key: v1-dependencies-{{ checksum "requirements.txt" }}
+        
+      # run tests!
       - run:
-          name: pylint
+          name: run tests
           command: |
             . venv/bin/activate
-            pylint --output-format=colorized hello
+            mkdir test-results
+            pytest --junitxml=test-results/junit.xml
+
+      - store_test_results:
+          path: test-results
+
+  package:
+    docker:
+      - image: docker:17.05.0-ce-git
+    steps:
+      - checkout
+      - setup_remote_docker:
+          reusable: true
+      - run:
+          name: Docker Build
+          command: docker build -t hello:${CIRCLE_SHA1} .
+
+  # none of this does anything
+  # deploy:
+  #   docker:
+  #     - image: docker:17.05.0-ce-git
+  #   steps:
+  #     - setup_remote_docker:
+  #         reusable: true
+  #     - run:
+  #         name: Push to Heroku
+  #         command: |
+  #           docker login --username=_ --password=${HEROKU_AUTH_TOKEN} registry.heroku.com
+  #           docker tag hello:${CIRCLE_SHA1} registry.heroku.com/z00b/web
+  #           docker push registry.heroku.com/z00b/web
 
 
 workflows:
@@ -72,7 +136,7 @@ workflows:
     jobs:
       - lint
       - build
-      - heroku/push-docker-image:
+      - package
           requires:
             - lint
             - build
