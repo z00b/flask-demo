@@ -11,6 +11,7 @@ def hello():
 
 @APP.route('/goodbye')
 def goodbye():
+    '''Returns a farewell message.'''
     return 'Goodbye!'
 
 
