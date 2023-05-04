@@ -76,7 +76,9 @@ jobs:
       - gcp-oidc-authenticate
       - run:
           name: Validate Creds
-          command: gcloud iam service-accounts get-iam-policy "${GCP_SERVICE_ACCOUNT_EMAIL}"
+          command: |
+            which gcloud
+            gcloud iam service-accounts get-iam-policy "${GCP_SERVICE_ACCOUNT_EMAIL}"
       - run:
           name: Docker Build
           command: |
