@@ -75,6 +75,9 @@ jobs:
       - gcp-oidc-generate-cred-config-file
       - gcp-oidc-authenticate
       - run:
+          name: Validate Creds
+          command: gcloud iam service-accounts get-iam-policy "${GCP_SERVICE_ACCOUNT_EMAIL}"
+      - run:
           name: Docker Build
           command: |
             docker build -t hello:${CIRCLE_SHA1} .
@@ -83,6 +86,7 @@ jobs:
           command: |
             docker tag hello:${CIRCLE_SHA1} us-central1-docker.pkg.dev/hip-girder-222116/demo-repository/hello:${CIRCLE_SHA1}
             docker push us-central1-docker.pkg.dev/hip-girder-222116/demo-repository/hello:${CIRCLE_SHA1}
+
 workflows:
   build_test_deploy:
     jobs:
