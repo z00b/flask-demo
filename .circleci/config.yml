@@ -85,7 +85,10 @@ jobs:
       - run:
           name: Deploy to Cloud Run
           command: |
-            gcloud run deploy --image=us-central1-docker.pkg.dev/hip-girder-222116/demo-repository/hello:${CIRCLE_SHA1} --platform=managed
+            gcloud run deploy \
+              --image us-central1-docker.pkg.dev/hip-girder-222116/demo-repository/hello:${CIRCLE_SHA1} \
+              --platform managed \
+              --service hello
 
 workflows:
   build_test_deploy:
