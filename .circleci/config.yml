@@ -87,8 +87,7 @@ jobs:
           command: |
             gcloud run deploy hello \
               --image us-central1-docker.pkg.dev/hip-girder-222116/demo-repository/hello:${CIRCLE_SHA1} \
-              --region=us-central1 --project=hip-girder-222116 \
-              --allow-unauthenticated
+              --region=us-central1 --project=hip-girder-222116 --allow-unauthenticated
 
 workflows:
   build_test_deploy:
