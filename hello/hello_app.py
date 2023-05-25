@@ -12,7 +12,7 @@ def hello():
 @APP.route('/goodbye')
 def goodbye():
     '''Returns a farewell message.'''
-    return 'Goodbye!'
+    return 'Ciao!'
 
 
 if __name__ == "__main__":

@@ -22,5 +22,5 @@ class HelloTest(unittest.TestCase):
     def test_goodbye(self):
         '''Test the /goodbye route'''
         response = self.app.get('/goodbye')
-        assert_contains(b'Goodbye!', response.data)
+        assert_contains(b'Ciao', response.data)
         
