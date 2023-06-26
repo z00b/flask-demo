@@ -7,7 +7,7 @@ APP = Flask(__name__)
 @APP.route("/")
 def hello():
     '''Ensure that people feel very welcome.'''
-    return "Hello, visitor!"
+    return "Hello, my friend!"
 
 @APP.route('/goodbye')
 def goodbye():
