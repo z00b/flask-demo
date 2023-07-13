@@ -7,12 +7,12 @@ validate_and_checkout() {
   git config --global user.email "rob@zuber.net"
   git config --global user.name "Robert Zuber"
   git add ${THE_FILE}
-  git commit -m "FTFW"
+  git commit -m "CircleCI Suggested Fixes"
   git push origin HEAD
 }
 
 
-mkdir -p ${OUTPUT}
+mkdir -p test-results
 
 # if it passes on the original attempt, the build should be
 # green. otherwise this build is red, but we try to create
