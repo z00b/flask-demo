@@ -17,7 +17,7 @@ class HelloTest(unittest.TestCase):
 
     def test_messaging(self):
         '''Do some testing'''
-        assert_contains(b'Hollow', self.app.get('/').data)
+        assert_contains(b'Hola', self.app.get('/').data)
 
     def test_goodbye(self):
         '''Test the /goodbye route'''
