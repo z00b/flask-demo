@@ -93,7 +93,8 @@ workflows:
   build_test_deploy:
     jobs:
       - lint
-      - build
+      - build:
+          context: z00b-basics
       - deploy:
           context: z00b-basics
           requires:
