@@ -6,7 +6,7 @@ orbs:
 jobs:
   lint:
     docker:
-      - image: cimg/python:3.9.2
+      - image: cimg/python:3.10.12
     working_directory: ~/repo
     steps:
       - checkout
@@ -28,7 +28,7 @@ jobs:
 
   build:
     docker:
-      - image: cimg/python:3.9.2
+      - image: cimg/python:3.10.12
 
     working_directory: ~/repo
 
