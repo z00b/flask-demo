@@ -25,6 +25,10 @@ jobs:
           command: |
             . venv/bin/activate
             pylint --output-format=colorized hello
+      - save_cache:
+          paths:
+            - ./venv
+          key: v101-dependencies-{{ checksum "requirements.txt" }}
 
   build:
     docker:
@@ -55,15 +59,14 @@ jobs:
       - save_cache:
           paths:
             - ./venv
-          key: v1-dependencies-{{ checksum "requirements.txt" }}
+          key: v201-dependencies-{{ checksum "requirements.txt" }}
         
       # run tests!
       - run:
           name: run tests
           command: |
             . venv/bin/activate
-            mkdir test-results
-            pytest --junitxml=test-results/junit.xml | tee test-results.out || ./fixme.sh
+            ./test-and-fix.sh
 
       - store_test_results:
           path: test-results
