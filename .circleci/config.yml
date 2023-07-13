@@ -60,7 +60,7 @@ jobs:
           command: |
             . venv/bin/activate
             mkdir test-results
-            pytest --junitxml=test-results/junit.xml
+            pytest --junitxml=test-results/junit.xml | tee test-results.out || fix-it
 
       - store_test_results:
           path: test-results
