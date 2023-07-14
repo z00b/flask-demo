@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -o pipefail
+
 OUTPUT=test-results.out
 THE_FILE=hello/hello_app.py
 
