@@ -32,7 +32,7 @@ for ((i=0; i<10; i++)); do
 
   if [[ $? -eq 0 ]]; then
     echo "Validation succeeded."
-    push_commit
+    push_fix
     break
   else
     echo "Validation failed. Attempting checkout..."
