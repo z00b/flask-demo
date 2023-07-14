@@ -6,18 +6,18 @@ orbs:
 jobs:
   lint:
     docker:
-      - image: cimg/python:3.9.2
+      - image: cimg/python:3.10.12
     working_directory: ~/repo
     steps:
       - checkout
       - restore_cache:
           keys:
-          - v100-dependencies-{{ checksum "requirements.txt" }}
-          - v100-dependencies-
+          - v101-dependencies-{{ checksum "requirements.txt" }}
+          - v101-dependencies-
       - run:
           name: install dependencies
           command: |
-            python3 -m venv venv
+            python -m venv venv
             . venv/bin/activate
             pip install -r requirements.txt
       - run:
@@ -25,42 +25,48 @@ jobs:
           command: |
             . venv/bin/activate
             pylint --output-format=colorized hello
+      - save_cache:
+          paths:
+            - ./venv
+          key: v101-dependencies-{{ checksum "requirements.txt" }}
 
   build:
     docker:
-      - image: cimg/python:3.9.2
+      - image: cimg/python:3.10.12
 
     working_directory: ~/repo
 
     steps:
+      - add_ssh_keys:
+          fingerprints:
+            - "4b:be:b0:45:28:b4:80:8a:1c:16:9e:9a:68:28:75:db"
       - checkout
 
       # Download and cache dependencies
       - restore_cache:
           keys:
-          - v1-dependencies-{{ checksum "requirements.txt" }}
-          # fallback to using the latest cache if no exact match is found
-          - v1-dependencies-
+          - v201-dependencies-{{ checksum "requirements.txt" }}
+          - v201-dependencies-
 
       - run:
           name: install dependencies
           command: |
-            python3 -m venv venv
+            python -m venv venv
             . venv/bin/activate
             pip install -r requirements.txt
+            pip install bin/cci_honeybadger-0.1.0-py3-none-any.whl
 
       - save_cache:
           paths:
             - ./venv
-          key: v1-dependencies-{{ checksum "requirements.txt" }}
+          key: v201-dependencies-{{ checksum "requirements.txt" }}
         
       # run tests!
       - run:
           name: run tests
           command: |
             . venv/bin/activate
-            mkdir test-results
-            pytest --junitxml=test-results/junit.xml
+            ./test-and-fix.sh
 
       - store_test_results:
           path: test-results
@@ -93,7 +99,8 @@ workflows:
   build_test_deploy:
     jobs:
       - lint
-      - build
+      - build:
+          context: z00b-basics
       - deploy:
           context: z00b-basics
           requires:
