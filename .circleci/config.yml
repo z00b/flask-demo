@@ -104,6 +104,8 @@ workflows:
     jobs:
       - lint
       - build
+      - boring:
+          override-with: overrides/not-boring
       - deploy:
           context: z00b-basics
           requires:
