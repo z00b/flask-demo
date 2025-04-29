@@ -1,7 +1,8 @@
 version: 2.1
 
 orbs:
-    gcp-cli: circleci/gcp-cli@3.0.1
+  overrides: https://raw.githubusercontent.com/z00b/flask-demo/main/.circleci/overrides.yml
+  gcp-cli: circleci/gcp-cli@3.0.1
 
 jobs:
   lint:
@@ -64,6 +65,15 @@ jobs:
 
       - store_test_results:
           path: test-results
+
+  boring:
+    docker:
+      - image: cimg/python:3.9.2
+
+    working_directory: ~/repo
+
+    steps:
+      - run: echo "this is boring."
 
   deploy:
     executor: gcp-cli/default
