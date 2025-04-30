@@ -8,4 +8,4 @@ jobs:
     working_directory: ~/repo
 
     steps:
-      - run: echo "this is less boring!"
+      - run: echo "this is very not boring!"
