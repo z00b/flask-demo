@@ -1,0 +1,143 @@
+version: 2.1
+
+orbs:
+  gcp-cli: circleci/gcp-cli@3.0.1
+
+executors:
+  default:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: large.gen3
+
+jobs:
+  lint:
+    executor: default
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v100-dependencies-{{ checksum "requirements.txt" }}
+            - v100-dependencies-
+      - run:
+          name: install dependencies
+          command: |
+            python3 -m venv venv
+            . venv/bin/activate
+            pip install -r requirements.txt
+      - run:
+          name: pylint
+          command: |
+            . venv/bin/activate
+            pylint --output-format=colorized src
+
+  build:
+    executor: default
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "requirements.txt" }}
+            - v1-dependencies-
+      - run:
+          name: install dependencies
+          command: |
+            python3 -m venv venv
+            . venv/bin/activate
+            pip install -r requirements.txt
+            pip freeze | grep -v -f requirements.txt - | grep -v '^#' | xargs pip uninstall -y
+      - save_cache:
+          paths:
+            - ./venv
+          key: v1-dependencies-{{ checksum "requirements.txt" }}
+      - run:
+          name: run tests
+          command: |
+            . venv/bin/activate
+            mkdir test-results
+            pytest --junitxml=test-results/junit.xml
+      - store_test_results:
+          path: test-results
+
+  deploy:
+    executor: gcp-cli/default
+    steps:
+      - checkout
+      - setup_remote_docker:
+          reusable: true
+      - gcp-cli/install
+      - gcp-oidc-generate-cred-config-file
+      - gcp-oidc-authenticate
+      - run:
+          name: Build Image
+          command: docker build -t flask-demo:${CIRCLE_SHA1} .
+      - run:
+          name: Push to Artifact Registry
+          command: |
+            docker tag flask-demo:${CIRCLE_SHA1} us-central1-docker.pkg.dev/hip-girder-222116/demo-repository/flask-demo:${CIRCLE_SHA1}
+            docker push us-central1-docker.pkg.dev/hip-girder-222116/demo-repository/flask-demo:${CIRCLE_SHA1}
+      - run:
+          name: Deploy to Cloud Run
+          command: |
+            gcloud run deploy flask-demo \
+              --image us-central1-docker.pkg.dev/hip-girder-222116/demo-repository/flask-demo:${CIRCLE_SHA1} \
+              --region=us-central1 --project=hip-girder-222116 --allow-unauthenticated
+
+workflows:
+  build_test_deploy:
+    jobs:
+      - lint
+      - build
+      - deploy:
+          context: z00b-basics
+          requires:
+            - build
+          filters:
+            branches:
+              only: main
+
+commands:
+  gcp-oidc-generate-cred-config-file:
+    description: "Authenticate with GCP using a CircleCI OIDC token."
+    parameters:
+      project_id:
+        type: env_var_name
+        default: GCP_PROJECT_ID
+      workload_identity_pool_id:
+        type: env_var_name
+        default: GCP_WIP_ID
+      workload_identity_pool_provider_id:
+        type: env_var_name
+        default: GCP_WIP_PROVIDER_ID
+      service_account_email:
+        type: env_var_name
+        default: GCP_SERVICE_ACCOUNT_EMAIL
+      gcp_cred_config_file_path:
+        type: string
+        default: /home/circleci/gcp_cred_config.json
+      oidc_token_file_path:
+        type: string
+        default: /home/circleci/oidc_token.json
+    steps:
+      - run:
+          command: |
+            echo $CIRCLE_OIDC_TOKEN > << parameters.oidc_token_file_path >>
+            gcloud iam workload-identity-pools create-cred-config \
+                "projects/${<< parameters.project_id >>}/locations/global/workloadIdentityPools/${<< parameters.workload_identity_pool_id >>}/providers/${<< parameters.workload_identity_pool_provider_id >>}" \
+                --output-file="<< parameters.gcp_cred_config_file_path >>" \
+                --service-account="${<< parameters.service_account_email >>}" \
+                --credential-source-file=<< parameters.oidc_token_file_path >>
+
+  gcp-oidc-authenticate:
+    description: "Authenticate with GCP using a GCP credentials file."
+    parameters:
+      gcp_cred_config_file_path:
+        type: string
+        default: /home/circleci/gcp_cred_config.json
+    steps:
+      - run:
+          command: |
+            gcloud auth login --brief --cred-file "<< parameters.gcp_cred_config_file_path >>"
+            echo "export GOOGLE_APPLICATION_CREDENTIALS='<< parameters.gcp_cred_config_file_path >>'" | tee -a "$BASH_ENV"
+            gcloud auth configure-docker us-central1-docker.pkg.dev
